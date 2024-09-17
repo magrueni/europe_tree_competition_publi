@@ -1,0 +1,21 @@
+climate_model_dir	Projects/Resonate/3pg/dnn_climate_indices/models/
+climate_model		climcompressor_v4.h5
+path_sql_dir		Projects/Resonate/data_portal/simulation_data/
+sql_model		simulation_db_users_v6.sqlite
+path_model_dir		Projects/Resonate/saved_models/
+dnn_model		final_v17_7.h5
+path_raw_data		Projects/Resonate/svd_dnn/pred_data_clim
+path_prep_data		Projects/Resonate/svd_dnn/pred_data_clim/final
+load_prep_data		Projects/Resonate/svd_dnn/pred_data_clim/final
+path_results_dir	Projects/Resonate/svd_dnn/predictions/final
+prep_data		Projects/Resonate/svd_dnn_scripts/PrepData_config
+species			Projects/Resonate/svd_dnn_scripts/species
+init_states		Projects/Resonate/svd_dnn_scripts/init_states
+years			Projects/Resonate/svd_dnn_scripts/years
+scenarios		Projects/Resonate/svd_dnn_scripts/scenarios
+prefix_prep		
+prefix_pred		vF1
+suffix			all_grids_v8
+file_ext_raw		dat
+file_ext_prep		parquet
+file_ext_pred		dat
