@@ -46,10 +46,7 @@ dbDisconnect(simulation_db)
 
 ### same for augmentation samples -----------------------------------------------------------------------------------
 
-simulation_db <- DBI::dbConnect(RSQLite::SQLite(), paste0(path, "/Projects/Resonate/data_portal/simulation_data/simulation_db_users_v6.sqlite"))
-tables_con <- dbListTables(simulation_db)
-
-metadata <- dbReadTable(simulation_db, "metadata_all")
+examples <- dbReadTable(simulation_db, "examples_2m_augmentation" )
 
 examples_with_soil <- examples %>%
   left_join(metadata %>% dplyr::select(uniqueID, ID, WHC, TextureSand, SoilDepth, AvailableNitrogen) %>% 
