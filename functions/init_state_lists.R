@@ -7,13 +7,8 @@ path <- "/.../"
 
 ### load data --------------------------------
 
-simulation_db <- DBI::dbConnect(RSQLite::SQLite(), paste0(path, "/forest_simulation_db_v1.1.sqlite"))
-tables_con <- dbListTables(simulation_db)
-metadata <- dbReadTable(simulation_db, "metadata_with_fitting_scenario")
-expls <- dbReadTable(simulation_db, "examples_pruned_5_v16")
-expls_aug <- dbReadTable(simulation_db, "examples_aug_pruned_5_v16")
-
-dbDisconnect(simulation_db)
+expls <- read_csv(paste0(path, "/data/dnn_training_samples/training_samples.csv"))
+expls_aug <- read_csv(paste0(path, "/data/dnn_training_samples/augmentation_training_samples.csv"))
 
 expls_all <- rbind(expls %>% dplyr::select(svd_state), expls_aug %>% dplyr::select(svd_state))
 
