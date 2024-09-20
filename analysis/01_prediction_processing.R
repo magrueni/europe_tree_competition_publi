@@ -20,7 +20,7 @@ path <- "/.../"
 
 # load functions
 source(paste0("functions/calculate_all_indicators_gridcell_rate.R"))
-source(paste0("init_state_lists.R"))
+source(paste0("functions/init_state_lists.R"))
 
 
 # load data
@@ -174,7 +174,7 @@ write_csv(all_out_hei, paste0(path, "/results/hei_absolute_change_10year.csv"))
 
 # load function
 source(paste0(path, "/functions/calculate_all_indicators_gridcell_dominance.R"))
-source(paste0(path, "/analysis/init_state_lists.R"))
+source(paste0(path, "/functions/init_state_lists.R"))
 
 # load data
 files <- list.files(paste0(path, "/predictions/"), full.names = TRUE)
