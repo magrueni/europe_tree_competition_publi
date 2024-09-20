@@ -8,7 +8,6 @@ process_dnn_predictions_dominance <- function(file, timestep) {
   scen <- ifelse(grepl("ICHEC-EC-EARTH", file), "ichec",
                  ifelse(grepl("MPI-M-MPI-ESM-LR", file), "mpi", "ncc"))
   
-  
   # 1. check if the same species is predicted -------------------------
   pred_sp <- dat %>% dplyr::select(point_id, state, pred_state_1, state_proba_1, time_index_1, time_proba_1, 
                                    time_index_2, time_proba_2, time_index_3, time_proba_3) 
@@ -20,7 +19,8 @@ process_dnn_predictions_dominance <- function(file, timestep) {
   pred_sp <- pred_sp %>% 
     rowwise() %>% 
     mutate(sp_init = strsplit(state, "_")[[1]][1]) %>% 
-    mutate(sp_dom = substr(sp_init, 0, 4)) %>% 
+    mutate(sp_dom = substr(sp_init, 0, 4),
+           sp_sec = substr(sp_init, 5, 8)) %>% 
     mutate(lai_init = as.numeric(strsplit(state, "_")[[1]][2])) %>% 
     mutate(height_init = as.numeric(strsplit(state, "_")[[1]][4])) %>% 
     mutate(sp_pred = strsplit(pred_state_1, "_")[[1]][1]) %>% 
@@ -28,9 +28,11 @@ process_dnn_predictions_dominance <- function(file, timestep) {
     mutate(height_pred = as.numeric(strsplit(pred_state_1, "_")[[1]][4])) 
   
   
-  # check if its the same veg or not
+  # filter out predictions with completely different vegetation (i.e. wierd transitions)
   pred_sp <- pred_sp %>% rowwise() %>% 
-    mutate(veg_diff = ifelse(grepl(sp_dom, sp_pred), 0, 1),
+    mutate(veg_diff = ifelse(grepl(sp_dom, sp_pred), 0,
+                             ifelse(grepl(tolower(sp_dom), sp_pred), 1,
+                                    ifelse(grepl(toupper(sp_sec), sp_pred), 1, NA))),
            veg_diff_rate = veg_diff / t_time_est)
   
   
