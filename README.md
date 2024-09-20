@@ -14,8 +14,7 @@ There are several folders:
 
 
 3. dnn_predictions: 
-   This folder contains the code to run dnn predictions with the training dnn for different forest states.
-
+   This folder contains the code to run dnn predictions with the trained dnn for different forest states.
 
 4. analysis: 
    This folder contains all code to run the statistical analysis and produce the figures.
