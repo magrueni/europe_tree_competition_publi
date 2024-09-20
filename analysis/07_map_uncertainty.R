@@ -3,10 +3,8 @@
 ##########################################################################
 
 
-library(arrow)
 library(tidyverse)
 library(dplyr)
-library(reshape)
 library(terra)
 library(raster)
 library(ggplot2)
@@ -14,14 +12,11 @@ library(ggdist)
 library(ggbeeswarm)
 library(tidyterra)
 library(sf)
-library(RColorBrewer)
-library(pals)
 library(gridExtra)
 library(data.table)
 library(grid)
-library(parallel)
 library(MetBrewer)
-library(scico)
+
 
 library(dplyr, warn.conflicts = FALSE)
 
