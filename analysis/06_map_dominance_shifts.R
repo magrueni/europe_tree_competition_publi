@@ -181,7 +181,7 @@ for(c in rcps){
     scale_fill_scico(palette = "lajolla", na.value = "lightgrey",
                      limits = c(-60, 0),
                      breaks = c(-50, -25, 0),
-                     direction = 1,
+                     direction = -1,
                      guide = guide_colorbar(title.position = "top", 
                                             title.hjust = 0)) + 
     geom_spatvector(data = europe, fill = "transparent", col = "black") +
