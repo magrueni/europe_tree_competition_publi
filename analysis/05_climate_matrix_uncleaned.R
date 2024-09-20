@@ -12,7 +12,7 @@ library(sf)
 library(data.table)
 
 
-path <- "/data/public/"
+path <- "/.../"
 
 ### load data ---
 all_out_lai <- read_csv(paste0(path, "/results/lai_absolute_change_v46_10year.csv"))
