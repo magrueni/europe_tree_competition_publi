@@ -47,14 +47,14 @@ x_rast <- rast(paste0(path, "/gis_data/reference_grid.tif"))
 rast_df <- as.data.frame(x_rast, xy = T)
 colnames(rast_df) <- c("x", "y", "point_id")
 
-eu_shp <- vect(paste0(path, "/gis_data/europe_lowres.shp"))
+eu_shp <- shapefile(paste0(path, "/gis_data/europe_lowres.shp"))
 hex_ecu <- make_grid(eu_shp, type = "hexagonal", cell_width = 100000, clip = TRUE)
 
 
 
 
 ### load pre processed data from script 1 -------------------------------------------
-dom <- read_csv(paste0(path, "/results/dom_absolute_change_10year_all_filtered.csv"))
+dom <- read_csv(paste0(path, "/results/dom_absolute_change_10year.csv"))
 
 
 # define rcps
@@ -167,17 +167,6 @@ for(c in rcps){
   # calculate the sum and focus on negative shifts
   all_rasts_sum <- app(all_rasts, sum, na.rm = T)
   all_rasts_sum[all_rasts_sum > 0] <- 0
-  
-  # calculate the percentage of negative shifts
-  bin0 <- as.data.frame(all_rasts_sum)
-  bin0 %>% 
-    mutate(sum = ifelse(sum != 0, 1, 0)) %>%
-    group_by(sum) %>%
-    summarize(count = n()) %>% 
-    mutate(all = sum(count)) %>% 
-    mutate(pct = 100*count/all)
-  
-  
   all_rasts_sum_count <- all_rasts_sum
   all_rasts_sum_count[!is.na(all_rasts_sum_count)] <- 1
   
@@ -212,16 +201,6 @@ for(c in rcps){
 
   
   # get the numbers
-  numbers_grids <- bin0 %>%
-    mutate(sum = ifelse(sum > -5, 0, sum)) %>%
-    mutate(sum = ifelse(sum != 0, 1, 0)) %>%
-    group_by(sum) %>%
-    summarize(count = n()) %>%
-    mutate(all = sum(count)) %>%
-    mutate(pct = 100*count/all)
-  
-  print(numbers_grids)
-  
   sf_obj_df <- as.data.frame(sf_obj) %>% dplyr::select(sum)
   numbers <- sf_obj_df %>% 
     mutate(sum = ifelse(sum > -5, 0, sum)) %>%
