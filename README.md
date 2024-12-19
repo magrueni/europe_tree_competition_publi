@@ -4,9 +4,9 @@ This repository contains code for the publication "Loss of competitive strength 
 There are several folders:
 1. preprocessing: 
    This folder contains scripts that were used for data preprocessing. Hereby we used the data from the harmonized simulation database: https://zenodo.org/records/12750180
-   The first steps are done in R to extract forest state transitions from the simulation database.
+   The first steps are done in R (version 4.2.2) to extract forest state transitions from the simulation database.
    In a second part, this information is then used to extract simulation years with corresponding daily climate information from the harmonized simulation database.
-   This second part is done in a python script, as a climate compressor DNN is applied to reduce the dimensions in the training data. See supplementary material for detailed description
+   This second part is done in Python (version 3.9), where a climate compressor DNN is applied to reduce the dimensions in the training data. See supplementary material for detailed description
    
    
 2. dnn: 
