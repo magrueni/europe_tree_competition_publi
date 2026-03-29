@@ -1,0 +1,186 @@
+##### Second script -- continental scale competitive strength ------------------
+
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(tidyterra)
+library(sf)
+library(data.table)
+
+path <- "/data/public/archive/projects/2021_Resonate/04_work/"
+path_out <- paste0(path, "/svd_dnn/svd_dnn_results/")
+
+# get dominance
+forest_cover <- read_csv(paste0(path0, "/gis_data/reference_grid_forest_cover.csv"))
+forest_cover <- forest_cover %>% 
+  mutate(forest_cover = ifelse(is.na(forest_cover), 0, forest_cover)) %>% 
+  mutate(forest_cover = ifelse(forest_cover < 0.05, 0, forest_cover))
+
+x_rast <- rast(paste0(path0, "/clim_data/reference_grid.tif"))
+x_rast_proj <- terra::project(x_rast, proj_leae)
+ref_grid <- as.data.frame(x_rast, xy = T)
+pixel_area <- cellSize(x_rast, unit = "m")
+pixel_area_df <- as.data.frame(pixel_area, xy = T)
+
+area_df <- ref_grid %>% dplyr::rename("point_id" = "reference_grid") %>% 
+  left_join(., forest_cover %>%
+              dplyr::select(point_id, forest_cover), by = c("point_id")) %>% 
+  left_join(pixel_area_df, by = c("x", "y"))
+
+
+# read in the process predictions
+all_dom <- read_csv(paste0(path, "/results/dom_absolute_change_v46_10year.csv"))
+all_dom <- all_dom %>% 
+  dplyr::select(species, rcp, point_id, diff = diff, net_change = net_change) %>% 
+  mutate(net_change = net_change)
+
+
+all_dom_new <- list()
+for(i in 1:length(unique(all_dom$species))){
+  
+  
+  dom_sp <- all_dom %>% filter(species == unique(all_dom$species)[i])
+  dom_range <- read_csv(paste0(path, "/gis_data/range_edges/sp_dom_ids", unique(all_dom$species)[i], ".csv"))
+  
+  
+  dom_sp_filt <- dom_sp %>% filter(point_id %in% dom_range$reference_grid)
+  
+  all_dom_new[[i]] <- dom_sp_filt
+  
+}
+
+
+all_dom_new <- do.call(rbind, all_dom_new)
+
+
+dom_dist <- read_csv(paste0(path, "/gis_data/range_edges/all_sp_dom_vals_v2.csv"))
+dom_dist <- dom_dist %>% dplyr::select(point_id, dom, species) %>%
+  left_join(area_df, by = c("point_id")) %>%
+  mutate(dom = ifelse(is.na(dom), 0, dom)) 
+
+
+dom_vals <- all_dom_new  %>%
+  dplyr::select(point_id, species) %>% distinct() %>% 
+  left_join(., dom_dist, by = c("point_id", "species")) %>% 
+  group_by(point_id, species) %>% 
+  summarize(dom_val = mean(dom, na.rm = T),
+            forest_cover = mean(forest_cover, na.rm = T)) %>%
+  group_by(species) %>%
+  mutate(dom_val_scaled = dom_val / mean(dom_val, na.rm = TRUE))
+
+
+
+# calculate the number of positive and negative gridcells...
+csi_df <- all_dom_new %>%
+  left_join(., dom_vals, by = c("point_id", "species")) %>% 
+  dplyr::rename("RCP" = rcp) %>% 
+  mutate(RCP = ifelse(RCP == "rcp_2_6", "RCP2.6",
+                      ifelse(RCP == "rcp_4_5", "RCP4.5", "RCP8.5"))) %>% 
+  rowwise() %>% 
+  mutate(species = gsub("_", " ", species)) %>% 
+  mutate(net_change_scaled = net_change*dom_val_scaled)
+
+csi_df %>%
+  group_by(species) %>%
+  summarise(net_negative = sum(net_change < 0, na.rm = TRUE),
+            net_positive = sum(net_change > 0, na.rm = TRUE),
+            sum = n()) %>%
+  mutate(pct_neg = 100/sum*net_negative,
+         pct_pos = 100/sum*net_positive)
+
+
+
+## get the numbers
+csi_df_summarised <- csi_df %>% group_by(species, RCP) %>% 
+  summarise(mean_csi = mean(net_change_scaled, na.rm = T),
+            sd_csi = sd(net_change_scaled, na.rm = T),
+            sum = n(),
+            se = sd_csi/sqrt(sum)) %>% 
+  mutate(upper = mean_csi + 1.96*se,
+         lower = mean_csi - 1.96*se)
+
+csi_df_summarised %>% filter(RCP == "RCP8.5")
+csi_df_summarised %>% filter(RCP == "RCP4.5")
+csi_df_summarised %>% filter(RCP == "RCP2.6")
+
+
+## bar plot
+level_order <- csi_df_summarised %>%
+  filter(RCP == "RCP8.5") %>% 
+  group_by(species) %>%
+  summarise(avg = mean(as.numeric(mean_csi))) %>%
+  arrange(avg) %>% dplyr::select(species) %>% unique() %>% unlist() %>% as.vector()
+
+
+p <- ggplot(csi_df_summarised  %>% filter(RCP != "RCP4.5") %>% filter(species != "Larix decidua")) +
+  geom_hline(yintercept = c(-20, -10, 0, 10, 20), linetype = "dashed", alpha = 0.5, color = "grey") +  # Add dashed horizontal lines
+  geom_bar(aes(x = factor(species, level = level_order),  y = mean_csi, fill = RCP), stat = "identity", position = "dodge") +
+  geom_errorbar(aes(x = factor(species, level = level_order), y = mean_csi, ymin = lower, ymax = upper, group = RCP), position = position_dodge(width = 0.9),
+                width=0.3, colour="black", alpha=0.7, linewidth=0.5) +
+  labs(x = "RCP", y = "Values") +
+  theme_classic()+
+  xlab("") + ylab("Shift in dominance [%]")+
+  scale_fill_manual(values = c("RCP8.5" = "#CC3380E6", "RCP4.5" = "#B3801AE6", "RCP2.6" = "#338080E6")) +
+  scale_y_continuous(breaks = c(-20, -10, 0, 10, 20), limits = c(-22, 15)) +  # <-- set breaks here
+  theme(
+    panel.border = element_rect(colour = "black", fill=NA, size = 1),
+    text = element_text(size = 12),
+    axis.text.x = element_text(size = 12),
+    axis.text.y = element_text(size = 12, face = "italic"),
+    axis.title.y = element_text(size = 12),
+    axis.title.x = element_text(size = 12, vjust = -1),
+    strip.text = element_text(size = 10),
+    legend.position = "bottom",
+    legend.title = element_text(hjust = -5),
+    legend.margin = margin(t = 10)  # Adjust the top margin of the legend# Move legend to the bottom
+  ) + coord_flip()
+
+p
+
+ggsave(paste0(path, "/figures/figure3a.png"),
+       p, dpi = 300, width = 5, height = 7.5, units = "in")
+write_csv(csi_df_summarised, paste0(path_out, "/figure_data/figure3a.csv"))
+
+
+### calculate absolute area ---
+# load the data for range size
+range_sizes <- read_csv(paste0(path, "/gis_data/range_edges/range_size_all_species.csv"))
+
+# range in ha/100
+
+range_sizes <- range_sizes %>% 
+  mutate(species_name = gsub("_", " ", species_name)) %>% 
+  dplyr::rename("species" = "species_name")
+
+
+
+# set minimum threshold of 5
+
+area_dom <- csi_df %>%
+  filter(RCP == "RCP8.5") %>%
+  group_by(species) %>%
+  summarise(net_negative = sum(net_change < 0, na.rm = TRUE),
+            net_positive = sum(net_change > 0, na.rm = TRUE),
+            sum = n()) %>%
+  mutate(pct_neg = 100/sum*net_negative,
+         pct_pos = 100/sum*net_positive) %>% 
+  mutate(pct_neg = pct_neg/100,
+         pct_pos = pct_pos/100)
+
+
+area_df <- area_dom %>% 
+  left_join(., range_sizes, by = "species") %>% 
+  mutate(loss_area = dom_range*pct_neg*100,
+         gain_area = dom_range*pct_pos*100) %>% 
+  mutate(loss_area_whole = whole_range*pct_neg*100,
+         gain_area_whole = whole_range*pct_pos*100)
+
+
+sum(area_df$loss_area)/sum(area_df$dom_range)
+
+
+View(area_df)
+
+
+
+
