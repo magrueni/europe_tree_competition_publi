@@ -1,5 +1,6 @@
 # europe_tree_competition_publi
 This repository contains code for the publication "Loss of competitive strength in European conifer species under climate change"  
+Data that goes along with the code can be downloaded here: 10.5281/zenodo.19161115
 
 There are several folders:
 1. preprocessing: 
@@ -7,11 +8,9 @@ There are several folders:
    The first steps are done in R (version 4.2.2) to extract forest state transitions from the simulation database.
    In a second part, this information is then used to extract simulation years with corresponding daily climate information from the harmonized simulation database.
    This second part is done in Python (version 3.9), where a climate compressor DNN is applied to reduce the dimensions in the training data. See supplementary material for detailed description
-   
-   
+      
 2. dnn: 
   This folder contains the code to train the deep neural network
-
 
 3. dnn_predictions: 
    This folder contains the code to run dnn predictions with the trained dnn for different forest states.
